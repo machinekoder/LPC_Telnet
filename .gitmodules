@@ -1,0 +1,3 @@
+[submodule "src/Libraries/ComplexCortex"]
+	path = src/Libraries/ComplexCortex
+	url = git@github.com:strahlex/ComplexCortex.git
