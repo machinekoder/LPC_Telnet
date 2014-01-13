@@ -10,6 +10,9 @@
 */
 #include <includes.h>
 #include <string.h>
+#include <shmemory.h>
+#include <protocols.h>
+#include <type.h>
 
 /*
 ************************************************************************************************
