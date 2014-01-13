@@ -129,11 +129,11 @@ SSRC += $(DRVPATH)/lpc17xx_nvic.c
 #SSRC += $(DRVPATH)/zentoolworksDriver.c
 
 #SSRC += $(LIBRARYPATH)/capcom.c
-SSRC += $(LIBRARYPATH)/timer.c
+#SSRC += $(LIBRARYPATH)/timer.c
 #SSRC += $(LIBRARYPATH)/timeout.c
-SSRC += $(LIBRARYPATH)/led.c
+#SSRC += $(LIBRARYPATH)/led.c
 #SSRC += $(LIBRARYPATH)/uart.c
-SSRC += $(LIBRARYPATH)/circularbuffer.c
+#SSRC += $(LIBRARYPATH)/circularbuffer.c
 #SSRC += $(LIBRARYPATH)/adc.c
 #SSRC += $(LIBRARYPATH)/dac.c
 #SSRC += $(LIBRARYPATH)/pwm.c
@@ -141,12 +141,12 @@ SSRC += $(LIBRARYPATH)/gpio.c
 SSRC += $(LIBRARYPATH)/pincon.c
 #SSRC += $(LIBRARYPATH)/iap.c
 #SSRC += $(LIBRARYPATH)/wifly.c
-SSRC += $(LIBRARYPATH)/button.c
+#SSRC += $(LIBRARYPATH)/button.c
 #SSRC += $(LIBRARYPATH)/crc.c
 SSRC += $(LIBRARYPATH)/ssp.c
 #SSRC += $(LIBRARYPATH)/rfm12.c
 #SSRC += $(LIBRARYPATH)/debug.c
-#SSRC += $(XPRINTFPATH)/xprintf.c
+SSRC += $(XPRINTFPATH)/xprintf.c
 
 
 LDFILE = LPC1758.ld

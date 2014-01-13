@@ -14,6 +14,8 @@
 #include <protocols.h>
 #include <ethernet.h>
 #include <type.h>
+#include <types.h>
+#include <xprintf.h>
 
 /*
 ************************************************************************************************
@@ -56,6 +58,25 @@ OS_Q RX_Q;
 
 INT16U tcp_ID;
 
+typedef enum {
+    ConnectionState_Offline = 0u,
+    ConnectionState_User = 1u,
+    ConnectionState_Pass = 2u,
+    ConnectionState_Online = 3u
+} ConnectionState;
+
+char *commandInBuffer;
+char *commandOutBuffer;
+uint16 commandInBufferPos;
+uint16 commandOutBufferPos;
+uint8 messageReady;
+
+const static char *user = "admin";
+const static char *pass = "pass";
+static ConnectionState connectionState;
+
+
+
 #define START_SRAM_BANK1 (0x20080000)
 #define RX_BUF_START (START_SRAM_BANK1)
 #define RX_BUF_LEN ((((EMAC_ETH_MAX_FLEN>>2)+2)*EMAC_NUM_RX_FRAG)+2/*+2 must be 32 bit aligned*/)
@@ -78,6 +99,9 @@ static void ETH_TRANS(void *p_arg);
 static void APP_NET(void *p_arg);
 
 static void PostEchoEvent(void);
+
+static void commandProcess(char *data, uint16 dataLength); 
+static void processCommand(char *data);
 
 
 /*
@@ -127,6 +151,13 @@ main (void)
         	    		(OS_ERR*)&os_err);
     if(os_err != OS_ERR_NONE)
     	for(;;);
+        
+    commandInBuffer = (char*)OSMemGet(&PacketMemArea, &os_err);
+    commandOutBuffer = (char*)OSMemGet(&PacketMemArea, &os_err);
+    commandInBufferPos = 0u;
+    commandOutBufferPos = 0u;
+    messageReady = 0u;
+    connectionState = ConnectionState_Offline;
 
     OSSemCreate(&ECHOSem, "ECHOSem", 0, &os_err);
     if(os_err != OS_ERR_NONE)
@@ -244,6 +275,7 @@ App_TaskStart (void *p_arg)
   if(err != OS_ERR_NONE)
 	  for(;;);
 
+#if 1
   OSTaskCreate((OS_TCB     *)&ETH_TRANSTCB,
                   (CPU_CHAR   *)"ETH_TRANS",
                   (OS_TASK_PTR )ETH_TRANS,
@@ -259,6 +291,7 @@ App_TaskStart (void *p_arg)
                   (OS_ERR     *)&err);
   if(err != OS_ERR_NONE)
   	  for(;;);
+#endif
 
   OSTaskCreate((OS_TCB     *)&APP_NETTCB,
                  (CPU_CHAR   *)"APP_NET",
@@ -276,7 +309,7 @@ App_TaskStart (void *p_arg)
   if(err != OS_ERR_NONE)
   	  for(;;);
 
-
+#if 1
   OSTaskCreate((OS_TCB     *)&App_TaskLEDTCB,
                  (CPU_CHAR   *)"LED",
                  (OS_TASK_PTR )App_TaskLED,
@@ -292,6 +325,7 @@ App_TaskStart (void *p_arg)
                  (OS_ERR     *)&err);
   if(err != OS_ERR_NONE)
   	  for(;;);
+#endif
 
 
   while (DEF_TRUE) {
@@ -435,8 +469,13 @@ static void APP_NET(void *p_arg) {
 	    if(Dataptr!=NULL) {
 	      SOCKET_read  (socketno,
 	                  (INT16U *)Dataptr, BytesRcvd);// reads incoming data from socket read buffer
-	      SOCKET_write (socketno,
-	                  (INT16U *)Dataptr, BytesRcvd);// sends the same data back to sender (TCP echo)
+          commandProcess((char*)Dataptr, (uint16)BytesRcvd);
+          if (messageReady == 1u)
+          {
+                SOCKET_write (socketno,
+                            (INT16U *)commandOutBuffer, strlen(commandOutBuffer));// sends the same data back to sender (TCP echo)
+	                  messageReady = 0u;
+          }
 	      OSMemPut(&PacketMemArea, (void *)Dataptr,&os_err);
 	      if(os_err != OS_ERR_NONE)
 	    	  for(;;);
@@ -488,3 +527,164 @@ App_TaskLED (void *p_arg)
 
 }
 /*! EOF */
+    
+void errorCommand()
+{
+    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"ERR: Command too long\n");
+    messageReady = 1u;
+}
+
+void errorWiFly()
+{
+    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"ERR: WiFly command too long\n");
+    messageReady = 1u;
+}
+
+void printUnknownCommand(void)
+{
+    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"CMD?\n");
+    messageReady = 1u;
+}
+
+void printParameterMissing(void)
+{
+    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"ERR: 2few Args\n");
+    messageReady = 1u;
+}
+
+void printAcknowledgement(void)
+{
+    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"ACK\n");
+    messageReady = 1u;
+}
+
+void printError(char *message)
+{
+    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN, "ERR: %s\n", message);
+    messageReady = 1u;
+}
+
+bool compareBaseCommand(char *original, char *received)
+{
+    return (strcmp(original,received) == (int)(0));
+}
+
+bool compareExtendedCommand(char *original, char *received)
+{
+    return (((strlen(received) == 1u) 
+            && (strncmp(original,received,1u) == (int)(0))) 
+            || (strcmp(original,received) == (int)(0)));
+}
+
+void commandProcess(char *data, uint16 dataLength)
+{
+    static char receivedData;
+    uint16 i;
+    
+    if (connectionState == ConnectionState_Offline)
+    {
+        xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Enter user:\n");
+        messageReady = 1u;
+        connectionState = ConnectionState_User;
+        return;
+    }
+    
+    for (i = 0u; i < dataLength; i++)
+    {
+        receivedData = data[i];
+        if ((receivedData != '\n')
+        )
+        {
+            commandInBuffer[commandInBufferPos] = receivedData;
+            if (commandInBufferPos < (EMAC_ETH_MAX_FLEN-1u))
+            {
+                commandInBufferPos++;
+            }
+            else
+            {
+                //(*errorFunctionPointer1)();
+                commandInBufferPos = 0u;
+            }
+        }
+        else
+        {
+            commandInBuffer[commandInBufferPos] = '\0';
+            
+            if (connectionState == ConnectionState_User)
+            {
+                if (strcmp(commandInBuffer, user) == (int)0)
+                {
+                    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Enter pass:\n");
+                    messageReady = 1u;
+                    connectionState = ConnectionState_Pass;
+                }
+                else
+                {
+                    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Wrong user, enter again:\n");
+                    messageReady = 1u;
+                }
+            }
+            else if (connectionState == ConnectionState_Pass)
+            {
+                if (strcmp(commandInBuffer, pass) == (int)0)
+                {
+                    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"You are logged in:\n");
+                    messageReady = 1u;
+                    connectionState = ConnectionState_Online;
+                }
+                else
+                {
+                    xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Wrong pass, enter again:\n");
+                    messageReady = 1u;
+                }
+            }
+            else
+            {
+                processCommand(commandInBuffer);
+            }
+            //(*taskFunctionPointer1)(taskBuffer1);
+            commandInBufferPos = 0u;
+        }
+    }
+}
+
+void processCommand(char *buffer)
+{
+    char *dataPointer;
+    char *savePointer;
+    int64 value;
+    
+    if (strlen(buffer) == 0u)
+    {
+        return;
+    }
+    dataPointer = strtok_r(buffer, " ", &savePointer);
+    
+    if (compareBaseCommand("test", dataPointer))
+    {
+        dataPointer = strtok_r(NULL, " ", &savePointer);
+        if (dataPointer == NULL)
+        {
+            printUnknownCommand();
+        }
+        else if (compareExtendedCommand("hall",dataPointer))
+        {
+        }
+        else
+        {
+            printUnknownCommand();
+        }
+    }
+    else
+    {
+        printUnknownCommand();
+    }
+}
+
+void HardFault_Handler()
+{
+    /*GPIO_SetValue(1,(1<<29));
+    //asm("ldr  r3, __cs3_reset");
+    asm volatile("ldr  r0, main\n"
+                 "bx   r0");*/
+}

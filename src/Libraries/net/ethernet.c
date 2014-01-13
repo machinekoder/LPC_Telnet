@@ -37,7 +37,7 @@ ETHERNET_HEADER   *pEther;
 OS_ERR              ErrVar;                    // only for debug purpose
 
  // ------ call system function to dynamically allocate buffer storage -------
-pTx = OSMemGet(&PacketMemArea, &ErrVar) ;// get memory block from Frame Buffer Area
+pTx = (LLC_HEADER*)OSMemGet(&PacketMemArea, &ErrVar) ;// get memory block from Frame Buffer Area
 if ( ErrVar != OS_ERR_NONE )
 {
   #if DEBUG
@@ -46,7 +46,7 @@ if ( ErrVar != OS_ERR_NONE )
   return;
 }
 
-pEther = (ETHERNET_HEADER *)&pTx->Data;
+pEther = (ETHERNET_HEADER *)&(pTx->Data);
 pTx->Bytes   = sizeof(ETHERNET_HEADER)-1 + DataLength;        // length of ether frame
 pEther->Destination     = EDestination;                            // destination hw address
 pEther->Source   = ESender;                                 // sender (me?)
@@ -63,7 +63,16 @@ memcpy(pEther->Data, (INT16U *)EtherData, DataLength);// move data into ether fr
  #endif // DEBUGF
 }
 */
-OSQPost(&TXNicQ, (void *)pTx, sizeof(LLC_HEADER *), OS_OPT_POST_FIFO | OS_OPT_POST_ALL , &ErrVar);// post packets into transmit queue + OS_OPT_POST_ALL
+OS_ERR os_err;
+EMAC_PACKETBUF_Type frame_p;
+frame_p.ulDataLen = pTx->Bytes;
+frame_p.pbDataBuf = (uint32_t *)(pTx->Data);
+
+/*write frame to dma location -> ready to send*/
+EMAC_WritePacketBuffer(&frame_p);
+EMAC_UpdateTxProduceIndex();
+OSMemPut(&PacketMemArea, (void*)pTx,&os_err);
+//OSQPost(&TXNicQ, (void *)pTx, sizeof(LLC_HEADER*), OS_OPT_POST_FIFO | OS_OPT_POST_ALL , &ErrVar);// post packets into transmit queue + OS_OPT_POST_ALL
 if(ErrVar != OS_ERR_NONE)
 	for(;;);
 }
