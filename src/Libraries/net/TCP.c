@@ -17,6 +17,7 @@
 #include "net_includes.h"
 extern IP_A my_ip;
 extern OS_MEM PacketMemArea;
+extern INT16U tcp_ID;
 
 
 // --------------------------------------------------------------------------------------------- 
@@ -56,7 +57,6 @@ INT32U SegLenOpt;
 
 TCP_PSEUDO_HEADER  *pTCP_ps_dest;      // TCP pseudo header
 TCP_HEADER         *pTCP_dest;         // TCP header
-static INT16U tcp_ID = 0;
 
  // ------ call system function to dynamically allocate buffer storage -------
 /*TODO: change PacketMemArea?*/

@@ -347,48 +347,48 @@ return(SOCKERR_RESULT_OK);                          // success
 // --------------------------------------------------------------------------------------------- 
 
 int SOCKET_write (int socketno, INT16U *writebuffer, int length) {
-int FuncResult;
-int RemainingBytes;
-int BlockStart;
+    int FuncResult;
+    int RemainingBytes;
+    int BlockStart;
 
-if ((socketno < 0) | (socketno > MAX_SOCKET_NUMBERS))
-{
- return(SOCKERR_PARAM_RANGE);                             // socket number out of range
-}
- // --- parameter check ---
-RemainingBytes = BYTESTOSEND - Socket[socketno].TxLen;    // free space in transmit location
+    if ((socketno < 0) | (socketno > MAX_SOCKET_NUMBERS))
+    {
+        return(SOCKERR_PARAM_RANGE);                             // socket number out of range
+    }
+    // --- parameter check ---
+    RemainingBytes = BYTESTOSEND - Socket[socketno].TxLen;    // free space in transmit location
 
-if (length <= 0) return (SOCKERR_PARAM_RANGE);            // invalid number of bytes to write
-if (length > RemainingBytes) return (SOCKERR_BUFFER_FULL);// not enough buffer space
-if (writebuffer == NULL) return (SOCKERR_NULL_PTR);       // can't read data from NULL pointer
+    if (length <= 0) return (SOCKERR_PARAM_RANGE);            // invalid number of bytes to write
+    if (length > RemainingBytes) return (SOCKERR_BUFFER_FULL);// not enough buffer space
+    if (writebuffer == NULL) return (SOCKERR_NULL_PTR);       // can't read data from NULL pointer
 
-if (Socket[socketno].SockState != TCP_STATE_ESTABLISHED)// cannot write in unestablished state
-{
- return(SOCKERR_WRONG_STATE);                           // wrong state to send payload
-}
-// now append data to end of transmit stack
-BlockStart = Socket[socketno].TxLen;                    // position to append data
- 
-memcpy((INT16U  *)(Socket[socketno].TxBuffer+BlockStart),//[BlockStart],// target: transmit buffer/////
-        (INT16U  *)&writebuffer[0],                       // copy from *writebuffer
-         length);                                            // "length" bytes to write
-Socket[socketno].TxLen += length;                            // new length, increased
+    if (Socket[socketno].SockState != TCP_STATE_ESTABLISHED)// cannot write in unestablished state
+    {
+        return(SOCKERR_WRONG_STATE);                           // wrong state to send payload
+    }
+    // now append data to end of transmit stack
+    BlockStart = Socket[socketno].TxLen;                    // position to append data
+    
+    memcpy((INT16U  *)(Socket[socketno].TxBuffer+BlockStart),//[BlockStart],// target: transmit buffer/////
+            (INT16U  *)&writebuffer[0],                       // copy from *writebuffer
+            length);                                            // "length" bytes to write
+    Socket[socketno].TxLen += length;                            // new length, increased
 
- // --- call state machine central procedure (SEND TxBUFFER) ---
-FuncResult = TCPSTATE_Central (socketno,
-               Socket[socketno].ForeignIP.d,        // may be undefined !
-               Socket[socketno].ForeignPort,        // may be undefined !
-               Socket[socketno].OwnPort,            // may be undefined !
-               0,                                   // SEQnum (ignore)
-               0,                                   // ACKnum (ignore)
-               TCP_SIG_NONE,                        // incoming flags
-               TCP_CONN_NONE,                       // highlevel socket command
-               -1,                                  // incoming max. window size demanded
-               -1,                                  // max. segment size
-               NULL,                                // data pointer
-               0);                                  // bytes to be read
-                                                    // (retransmit timer uses the same method)
-return (FuncResult);      // return TCPSTATE_Central() result
+    // --- call state machine central procedure (SEND TxBUFFER) ---
+    FuncResult = TCPSTATE_Central (socketno,
+                Socket[socketno].ForeignIP.d,        // may be undefined !
+                Socket[socketno].ForeignPort,        // may be undefined !
+                Socket[socketno].OwnPort,            // may be undefined !
+                0,                                   // SEQnum (ignore)
+                0,                                   // ACKnum (ignore)
+                TCP_SIG_NONE,                        // incoming flags
+                TCP_CONN_NONE,                       // highlevel socket command
+                -1,                                  // incoming max. window size demanded
+                -1,                                  // max. segment size
+                NULL,                                // data pointer
+                0);                                  // bytes to be read
+                                                        // (retransmit timer uses the same method)
+    return (FuncResult);      // return TCPSTATE_Central() result
 }
 
 // --------------------------------------------------------------------------------------------- 
@@ -611,21 +611,21 @@ return(SOCKERR_RESULT_OK);                       // alright
 
 int SOCKET_launcheventproc (INT16U socketno) {
 
-if ((socketno < 0) | (socketno > MAX_SOCKET_NUMBERS))
-{
- return(SOCKERR_PARAM_RANGE);                 // socket number out of range		
-}
-// --- now call event procedure
-if (Socket[socketno].EventProcedure != NULL)
-{
- Socket[socketno].EventProcedure ();          // call user definable procedure if not NULL
-}
-else 
-{
- return(SOCKERR_EVENTPROC_NULL);              // event proc is undefined
-}
- // --- return OK code ---
-return(SOCKERR_RESULT_OK);                    // alright, launched
+    if ((socketno < 0) | (socketno > MAX_SOCKET_NUMBERS))
+    {
+        return(SOCKERR_PARAM_RANGE);                 // socket number out of range		
+    }
+    // --- now call event procedure
+    if (Socket[socketno].EventProcedure != NULL)
+    {
+        (Socket[socketno].EventProcedure)();          // call user definable procedure if not NULL
+    }
+    else 
+    {
+        return(SOCKERR_EVENTPROC_NULL);              // event proc is undefined
+    }
+    // --- return OK code ---
+    return(SOCKERR_RESULT_OK);                    // alright, launched
 }
 
 // --------------------------------------------------------------------------------------------- 

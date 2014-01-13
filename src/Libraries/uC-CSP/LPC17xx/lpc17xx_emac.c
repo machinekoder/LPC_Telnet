@@ -893,13 +893,17 @@ void EMAC_WritePacketBuffer(EMAC_PACKETBUF_Type *pDataStruct)
 	uint32_t idx;
 	uint16_t len;
 	uint32_t *sp,*dp;
+    uint16_t i;
 
+    i = 0u;
 	idx = LPC_EMAC->TxProduceIndex;
 	sp  = (uint32_t *)pDataStruct->pbDataBuf;
 	dp  = (uint32_t *)Tx_Desc[idx].Packet;
 	/* Copy frame data to EMAC packet buffers. */
 	for (len = (pDataStruct->ulDataLen + 3u) >> 2; len; len--) {
-		*dp++ = *sp++;
+        dp[i] = sp[i];
+		//*dp++ = *sp++;
+        i++;
 	}
 	Tx_Desc[idx].Ctrl = (pDataStruct->ulDataLen - 1u) | (EMAC_TCTRL_INT | EMAC_TCTRL_LAST);
 }
@@ -917,6 +921,9 @@ void EMAC_ReadPacketBuffer(EMAC_PACKETBUF_Type *pDataStruct)
 	uint32_t idx;
 	uint16_t len;
 	uint32_t *dp, *sp;
+    uint16_t i;
+
+    i = 0u;
 
 	idx = LPC_EMAC->RxConsumeIndex;
 	dp = (uint32_t *)(pDataStruct->pbDataBuf);
@@ -924,7 +931,9 @@ void EMAC_ReadPacketBuffer(EMAC_PACKETBUF_Type *pDataStruct)
 
 	if (pDataStruct->pbDataBuf != NULL) {
 		for (len = (pDataStruct->ulDataLen + 3u) >> 2; len; len--) {
-			*dp++ = *sp++;
+            dp[i] = sp[i];
+            //*dp++ = *sp++;
+            i++;
 		}
 	}
 }

@@ -84,10 +84,10 @@ uint32_t __attribute__ ((aligned (4))) *eth_tx_buf;
 
 
 /* EMAC Memory Buffer configuration for 16K Ethernet RAM */
-#define EMAC_NUM_RX_FRAG         5           /**< Num.of RX Fragments 5*1536+2=7,5kB  */
-#define EMAC_NUM_TX_FRAG         5           /**< Num.of TX Fragments 5*1536+2=7,5kB  */
-#define EMAC_ETH_MAX_FLEN        1536        /**< Max. Ethernet Frame Size          */
-#define EMAC_TX_FRAME_TOUT       0x00100000  /**< Frame Transmit timeout count      */
+#define EMAC_NUM_RX_FRAG         5u           /**< Num.of RX Fragments 5*1536+2=7,5kB  */
+#define EMAC_NUM_TX_FRAG         5u           /**< Num.of TX Fragments 5*1536+2=7,5kB  */
+#define EMAC_ETH_MAX_FLEN        1536u        /**< Max. Ethernet Frame Size          */
+#define EMAC_TX_FRAME_TOUT       0x00100000u  /**< Frame Transmit timeout count      */
 
 /* --------------------- BIT DEFINITIONS -------------------------------------- */
 /*********************************************************************//**

@@ -63,7 +63,7 @@ memcpy(pEther->Data, (INT16U *)EtherData, DataLength);// move data into ether fr
  #endif // DEBUGF
 }
 */
-OSQPost(&TXNicQ, (void *)pTx, sizeof(LLC_HEADER *), OS_OPT_POST_FIFO+OS_OPT_POST_ALL , &ErrVar);// post packets into transmit queue + OS_OPT_POST_ALL
+OSQPost(&TXNicQ, (void *)pTx, sizeof(LLC_HEADER *), OS_OPT_POST_FIFO | OS_OPT_POST_ALL , &ErrVar);// post packets into transmit queue + OS_OPT_POST_ALL
 if(ErrVar != OS_ERR_NONE)
 	for(;;);
 }
@@ -78,12 +78,12 @@ if(ErrVar != OS_ERR_NONE)
 // ---------------------------------------------------------------------------------------------
 
 void ETHER_IPProcess (ETHERNET_HEADER *pETH) {
-IP_HEADER *pIP;
+    IP_HEADER *pIP;
 
-if (memcmp(my_mac.b, &pETH->Destination, ETH_ALEN)) return; // is it my HW address?
-pIP = (IP_HEADER *) pETH->Data;           // pIP starts at Ethernet data area (recvd frame)
-ARP_CanUpdateTable (pIP->source, pETH->Source);// Parameter: pointer to incoming ARP request
-IP_AllTypesProcess((IP_HEADER *) pIP);    // send data up to OSI layer 3 (IP  Module)
+    if (memcmp(my_mac.b, &pETH->Destination, ETH_ALEN)) return; // is it my HW address?
+    pIP = (IP_HEADER *) pETH->Data;           // pIP starts at Ethernet data area (recvd frame)
+    ARP_CanUpdateTable (pIP->source, pETH->Source);// Parameter: pointer to incoming ARP request
+    IP_AllTypesProcess((IP_HEADER *) pIP);    // send data up to OSI layer 3 (IP  Module)
 }                                              // uses <Send_Ether_Frame>
 
 

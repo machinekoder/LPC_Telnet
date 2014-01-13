@@ -12,6 +12,7 @@
 #include <string.h>
 #include <shmemory.h>
 #include <protocols.h>
+#include <ethernet.h>
 #include <type.h>
 
 /*
@@ -43,7 +44,7 @@ static CPU_STK APP_NETTCBStk[APP_STACK_SIZE];
  * Network stack related structures
  */
 
-static uint8_t eth_mac[6] = {0x5a,0x01,0x02,0x03,0x04,0x05};
+const static uint8_t eth_mac[6] = {0x5a,0x01,0x02,0x03,0x04,0x05};
 
 OS_SEM RX_SEM;
 
@@ -52,6 +53,8 @@ OS_SEM  ECHOSem;         // semaphore used for signaling incoming CHAT segment
 OS_Q TXNicQ;
 
 OS_Q RX_Q;
+
+INT16U tcp_ID;
 
 #define START_SRAM_BANK1 (0x20080000)
 #define RX_BUF_START (START_SRAM_BANK1)
@@ -74,7 +77,7 @@ static void ETH_RECV(void *p_arg);
 static void ETH_TRANS(void *p_arg);
 static void APP_NET(void *p_arg);
 
-void PostEchoEvent(void);
+static void PostEchoEvent(void);
 
 
 /*
@@ -97,8 +100,9 @@ void PostEchoEvent(void);
 int 
 main (void)
 {
+    tcp_ID = 0u;
 
-
+    
      OS_ERR   os_err = OS_ERR_NONE;
 #if (CPU_CFG_NAME_EN == DEF_ENABLED)
     CPU_ERR  cpu_err;
@@ -304,10 +308,12 @@ static void ETH_RECV(void *p_arg) {
 
 	OS_ERR os_err;
 	CPU_TS ts;
-	uint16_t len = 0;
+	uint16_t len;
 	EMAC_PACKETBUF_Type frame_p;
 	LLC_HEADER *llc_p;
 	ETHERNET_HEADER *pPacket;
+    
+    len = 0;
 
 	for(;;) {
 		OSSemPend(&RX_SEM, 0, OS_OPT_PEND_BLOCKING, &ts, &os_err);
@@ -316,7 +322,10 @@ static void ETH_RECV(void *p_arg) {
 	    if(os_err == OS_ERR_NONE) {
 
 	    	len = (uint16_t)EMAC_GetReceiveDataSize();
-	    	if(len > EMAC_ETH_MAX_FLEN) len = EMAC_ETH_MAX_FLEN;
+	    	if(len > EMAC_ETH_MAX_FLEN) 
+            {
+                len = EMAC_ETH_MAX_FLEN;
+            }
 
 	    	llc_p->Bytes = len - 3;/*do not copy checksum*/
 
@@ -397,7 +406,7 @@ static void APP_NET(void *p_arg) {
 
 	// -- socket setup --
 	socketno = SOCKET_getsocket();       // get next socket number
-	SOCKET_bind (socketno, 1024);        // bind to 1024 port
+	SOCKET_bind (socketno, 23);        // bind to 1024 port
 	SOCKET_seteventproc (socketno,
 	               &PostEchoEvent);       // set event procedure PostChatEvent
 	SOCKET_listen (socketno);            // go to listen state
@@ -405,7 +414,7 @@ static void APP_NET(void *p_arg) {
 
 	 while (1) {
 
-	  OSSemPend(&RX_SEM, 0, OS_OPT_PEND_BLOCKING, &ts, &os_err); // wait for TCP-Echo event
+	  OSSemPend(&ECHOSem, 0, OS_OPT_PEND_BLOCKING, &ts, &os_err); // wait for TCP-Echo event
 	  if(os_err != OS_ERR_NONE)
 		  for(;;);
 	  //OSSemPend(ECHOSem, 0, &err);         // wait for TCP-Echo event
@@ -414,7 +423,7 @@ static void APP_NET(void *p_arg) {
 	  {
 	   SOCKET_freesocket (socketno);       // give socket back
 	   socketno = SOCKET_getsocket();      // get next free socket number
-	   SOCKET_bind (socketno, 1024);       // bind to 1024 port
+	   SOCKET_bind (socketno, 23);       // bind to 1024 port
 	   SOCKET_seteventproc (socketno,
 	                 &PostEchoEvent);      // set event procedure PostChatEvent
 	   SOCKET_listen (socketno);           // go to listen state
@@ -459,6 +468,8 @@ App_TaskLED (void *p_arg)
   int toggle = 0;
   CLOCK_InitStandardTimers();
   CLOCK_Start();
+  
+  GPIO_SetValue(1,(1<<29));
 
 
   GPIO_SetDir(1,(1<<29),1);    /* Port, Mask, Direction 1 = Output*/

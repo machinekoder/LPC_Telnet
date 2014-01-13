@@ -147,7 +147,9 @@ return (FALSE);                         // ARP map ardy full!
 
 void ARP_RemoveTimedOutEntries (void)
 {
-  INT16U nVar = 0;
+  INT16U nVar;
+  
+  nVar = 0;
 
   while ( nVar < ARPENTRIES )
   {
