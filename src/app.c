@@ -752,15 +752,19 @@ void processCommand(char *buffer)
                     printError("param wrong");
                 }
             }
-            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
-            messageReady = 1u;
         }
         else
         {
             replyCounter = 0u;
-            pingHost(4u, dataPointer);
-            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
-            messageReady = 1u;
+            if (pingHost(4u, dataPointer) == 1u)
+            {
+                xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
+                messageReady = 1u;
+            }
+            else
+            {
+                printError("Wrong input");
+            }
             //printUnknownCommand();
         }
     }
