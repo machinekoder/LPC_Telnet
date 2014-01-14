@@ -71,8 +71,8 @@ uint16 commandInBufferPos;
 uint16 commandOutBufferPos;
 uint8 messageReady;
 
-const static char user[] = "admin\r";
-const static char pass[] = "pwd\r";
+const static char user[] = "admin";
+const static char pass[] = "pwd";
 static ConnectionState connectionState;
 
 
@@ -473,7 +473,7 @@ static void APP_NET(void *p_arg) {
           if (messageReady == 1u)
           {
                 SOCKET_write (socketno,
-                            (INT16U *)commandOutBuffer, strlen(commandOutBuffer));// sends the same data back to sender (TCP echo)
+                            (INT16U *)commandOutBuffer, strlen(commandOutBuffer));
 	                  messageReady = 0u;
           }
 	      OSMemPut(&PacketMemArea, (void *)Dataptr,&os_err);
@@ -608,6 +608,7 @@ void commandProcess(char *data, uint16 dataLength)
         }
         else
         {
+        	commandInBufferPos--;   // -1 to delate /r from command
             commandInBuffer[commandInBufferPos] = '\0';
             
             if (connectionState == ConnectionState_User)
@@ -670,11 +671,18 @@ void processCommand(char *buffer)
         else if (compareExtendedCommand("-c",dataPointer))
         {
         	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
+        	 messageReady = 1u;
         }
         else
         {
             printUnknownCommand();
         }
+    }
+    else if (compareBaseCommand("close", dataPointer))
+    {
+    	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"socket closing! \n");
+    	 messageReady = 1u;
+    	 SOCKET_close(1);
     }
     else
     {
