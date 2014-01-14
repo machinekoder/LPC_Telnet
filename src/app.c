@@ -890,20 +890,13 @@ void processCommand(char *buffer)
             }
         }
         
-        if (params == 0u)
+        if (doArp(broadcastAddress, clearAddress) == 1u)
         {
-            printParameterMissing();
+            printAcknowledgement();
         }
         else
         {
-            if (doArp(broadcastAddress, clearAddress) == 1u)
-            {
-                printAcknowledgement();
-            }
-            else
-            {
-                printError("wrong Input");
-            }
+            printError("wrong Input");
         }
     }
     else if (compareBaseCommand("logout", dataPointer))
