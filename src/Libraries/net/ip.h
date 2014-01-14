@@ -89,7 +89,8 @@ void IP_SendDatagram (IP_A IP_Address,         // address where to send datagram
 // ---------------------------------------------------------------------------------------------
 
 void IP_AllTypesProcess (IP_HEADER *pIP);// Parameter: pointer to incoming IP
-
+void IP_ICMPPing(ICMP_HEADER  *pICMPdest,// destination ICMP packet (ardy allocated)
+                INT16U *ICMPdestlen);
 #endif
 
 // ---------------------------------------------------------------------------------------------

@@ -125,7 +125,7 @@ static void APP_NET(void *p_arg);
 
 static void PostEchoEvent(void);
 
-static void pingHost(uint8 count, char* address);
+uint8 pingHost(uint8 count, char* address);
 static void commandProcess(char *data, uint16 dataLength); 
 static void processCommand(char *data);
 static void setSevenSegment(uint8 num, uint8 point);
@@ -736,9 +736,15 @@ void processCommand(char *buffer)
                     else
                     {
                         replyCounter = 0u;
-                        pingHost((uint8)value, dataPointer);
-                        xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
-                        messageReady = 1u;
+                        if (pingHost((uint8)value, dataPointer) == 1u)
+                        {
+                            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
+                            messageReady = 1u;
+                        }
+                        else
+                        {
+                            printError("wrong address");
+                        }
                     }
                 }
                 else
@@ -998,10 +1004,61 @@ uint8 doArp(char *broadcastAddress, char *clearAddress)
     return 1u;
 }
 
-void pingHost(uint8 count, char *address)
+uint8 pingHost(uint8 count, char *address)
 {
+    uint8 i;
+    uint8 pos;
+    int64 value;
+    INT16U ICMPdestlen;
+    ICMP_HEADER  *pICMPdest;
+    OS_ERR ErrVar;
+    IP_A targetAddress;
+    char *dataPointer;
+    char *savePointer;
     
-    //TODO ping
+    dataPointer = strtok_r(address, ".", &savePointer);
+    while (dataPointer != NULL)
+    {
+        
+        if (dataPointer != NULL)
+        {
+            if ((pos < 4u) || (xatoi(&dataPointer, &value) == 1u))
+            {
+                targetAddress.b[pos] = (uint8)value;
+                pos++;
+            }
+            else
+            {
+                return 0u;
+            }
+        }
+        dataPointer = strtok_r(NULL, ":", &savePointer);
+    }
+    if (pos != 4u)
+    {
+        return 0u;
+    }
+    
+    for (i = 0u; i< count; i++)
+    {
+        pICMPdest = (ICMP_HEADER  *)OSMemGet(&PacketMemArea, &ErrVar);// get memory block from Lan transmit partition
+        if ( pICMPdest == NULL )
+        {
+            return;
+        }
+        IP_ICMPPing((ICMP_HEADER  *)pICMPdest,// destination ICMP packet (ardy allocated)
+                    &ICMPdestlen);
+        IP_SendDatagram (targetAddress,                 // address where to send
+                        1,                             // message type: ICMP Echo reply
+                        123456u,                     // datagram identification
+                        0,                             // do not fragment
+                        (INT16U  *)pICMPdest,      // ICMP to be sent, allocated
+                        ICMPdestlen,                   // ICMP total length
+                        (void *)pICMPdest );           // pointer to dynamic memory block
+        OSTimeDlyHMSM(0,0,0,500,OS_OPT_TIME_HMSM_STRICT,&ErrVar);
+    }
+    
+    return 1u;
 }
 
 void setSevenSegment(uint8 num, uint8 point)

@@ -205,28 +205,59 @@ void IP_ICMPEchoReturn(ICMP_HEADER  *pICMP,    // incoming ICMP msg (ardy alloca
                        ICMP_HEADER  *pICMPdest,// destination ICMP packet (ardy allocated)
                        INT16U *ICMPdestlen) {      // resulting ICMP message length
 
-INT16U NewChecksum,        // checksum value variable
-       ICMP_Data_Length,   // ICMP data length
-       ICMP_HeaderLen;     // ICMP header length
+    INT16U NewChecksum,        // checksum value variable
+        ICMP_Data_Length,   // ICMP data length
+        ICMP_HeaderLen;     // ICMP header length
 
- // constants
-ICMP_HeaderLen    = sizeof(ICMP_HEADER) - 2;   // ICMP Header length
-ICMP_Data_Length  = ICMPlen - ICMP_HeaderLen;  // ICMP data length
- // set ICMP fields
-pICMPdest->ICMP_Type  = 0;                   // echo reply type
-pICMPdest->Code       = 0;                   // standard value
-pICMPdest->Checksum   = 0;                   // reset prior to new checksum calculation
-pICMPdest->Identifier = pICMP->Identifier;   // port ID
-pICMPdest->Sequence   = pICMP->Sequence;     // number of datagram
- // copy payload from incoming to outgoing message
-memcpy ((INT16U  *)&pICMPdest->Data[0],  // copy payload
-         (INT16U  *)&pICMP->Data[0],
-         ICMP_Data_Length);
- // compute checksum
-NewChecksum = UTILS_CalcChecksum((INT16U *)pICMPdest,
-                                 ICMPlen);   // new checksum for ICMP msg
-pICMPdest->Checksum = NewChecksum;           // accept new checksum
-*ICMPdestlen        = ICMPlen;               // length of new ICMP message
+    // constants
+    ICMP_HeaderLen    = sizeof(ICMP_HEADER) - 2;   // ICMP Header length
+    ICMP_Data_Length  = ICMPlen - ICMP_HeaderLen;  // ICMP data length
+    // set ICMP fields
+    pICMPdest->ICMP_Type  = 0;                   // echo reply type
+    pICMPdest->Code       = 0;                   // standard value
+    pICMPdest->Checksum   = 0;                   // reset prior to new checksum calculation
+    pICMPdest->Identifier = pICMP->Identifier;   // port ID
+    pICMPdest->Sequence   = pICMP->Sequence;     // number of datagram
+    // copy payload from incoming to outgoing message
+    memcpy ((INT16U  *)&pICMPdest->Data[0],  // copy payload
+            (INT16U  *)&pICMP->Data[0],
+            ICMP_Data_Length);
+    // compute checksum
+    NewChecksum = UTILS_CalcChecksum((INT16U *)pICMPdest,
+                                    ICMPlen);   // new checksum for ICMP msg
+    pICMPdest->Checksum = NewChecksum;           // accept new checksum
+    *ICMPdestlen        = ICMPlen;               // length of new ICMP message
+}
+
+void IP_ICMPPing(ICMP_HEADER  *pICMPdest,// destination ICMP packet (ardy allocated)
+                INT16U *ICMPdestlen) 
+{      // resulting ICMP message length
+
+    INT16U ICMPlen;            // length of message
+    INT16U NewChecksum,        // checksum value variable
+        ICMP_Data_Length,   // ICMP data length
+        ICMP_HeaderLen;     // ICMP header length
+        
+    ICMPlen = 98u;
+
+    // constants
+    ICMP_HeaderLen    = sizeof(ICMP_HEADER) - 2;   // ICMP Header length
+    ICMP_Data_Length  = ICMPlen - ICMP_HeaderLen;  // ICMP data length
+    // set ICMP fields
+    pICMPdest->ICMP_Type  = 8;                   // echo type
+    pICMPdest->Code       = 0;                   // standard value
+    pICMPdest->Checksum   = 0;                   // reset prior to new checksum calculation
+    pICMPdest->Identifier = 1;   // port ID
+    pICMPdest->Sequence   = 0;     // number of datagram
+    // copy payload from incoming to outgoing message
+    /*memcpy ((INT16U  *)&pICMPdest->Data[0],  // copy payload
+            (INT16U  *)&pICMP->Data[0],
+            ICMP_Data_Length);*/
+    // compute checksum
+    NewChecksum = UTILS_CalcChecksum((INT16U *)pICMPdest,
+                                    ICMPlen);   // new checksum for ICMP msg
+    pICMPdest->Checksum = NewChecksum;           // accept new checksum
+    *ICMPdestlen        = ICMPlen;               // length of new ICMP message
 }
 
 // ---------------------------------------------------------------------------------------------
