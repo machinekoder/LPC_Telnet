@@ -23,6 +23,7 @@ TxBufferType Level3_checkbuffer;      // buffer for IP checksum control
 extern IP_A my_ip;
 extern OS_MEM PacketMemArea;
 extern MAC_A my_mac;
+extern uint32 replyCounter;
 // ---------------------------------------------------------------------------------------------
 // function:    void IP_SendDatagram (IP_A IP_Address, INT16U IP_Protocol, INT16U Identification,
 //                                    INT16U FragmentOffset, INT16U  *Data, INT16U Datalen)
@@ -283,6 +284,7 @@ switch (Service_Type) {
    //ErrVar = OSMemPut(PacketMemArea, pICMPdest);
    break;
     default:
+        replyCounter++;
         break;
   }
 }

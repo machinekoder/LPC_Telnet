@@ -16,6 +16,7 @@
 #include <type.h>
 #include <types.h>
 #include <xprintf.h>
+#include <ssp.h>
 
 /*
 ************************************************************************************************
@@ -48,6 +49,25 @@ static CPU_STK APP_NETTCBStk[APP_STACK_SIZE];
 
 const static uint8_t eth_mac[6] = {0x5a,0x01,0x02,0x03,0x04,0x05};
 
+const static uint16 segmentValue[16u] = {
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001,
+    0b00000001
+};
+
 OS_SEM RX_SEM;
 
 OS_SEM  ECHOSem;         // semaphore used for signaling incoming CHAT segment
@@ -75,6 +95,9 @@ const static char user[] = "admin";
 const static char pass[] = "pwd";
 static ConnectionState connectionState;
 
+static uint8 segmentSelId;  // sel id for seven segment
+
+uint32 replyCounter; // replyCoutner for pin
 
 
 #define START_SRAM_BANK1 (0x20080000)
@@ -100,8 +123,10 @@ static void APP_NET(void *p_arg);
 
 static void PostEchoEvent(void);
 
+static void pingHost(char *address);
 static void commandProcess(char *data, uint16 dataLength); 
 static void processCommand(char *data);
+static void setSevenSegment(uint8 num);
 
 
 /*
@@ -158,6 +183,29 @@ main (void)
     commandOutBufferPos = 0u;
     messageReady = 0u;
     connectionState = ConnectionState_Offline;
+    
+    // Initialize 433MHz module
+    Pin_setFunction(0u, 7u, Pin_Function_SecondAlternate);  //SCK
+    Pin_setMode(0u, 7u, Pin_Mode_NoPullUpDown);
+    Pin_setFunction(0u, 8u, Pin_Function_SecondAlternate);
+    Pin_setMode(0u, 8u, Pin_Mode_NoPullUpDown);
+    Pin_setFunction(0u, 9u, Pin_Function_SecondAlternate);
+    Pin_setMode(0u, 9u, Pin_Mode_NoPullUpDown);
+    Ssp_initialize(Ssp1, 
+                   1000u, 
+                   Ssp_DataSize_8Bit,
+                   Ssp_FrameFormat_Spi,
+                   Ssp_Mode_Master,
+                   Ssp_Loopback_Disabled,
+                   Ssp_SlaveOutput_Enabled,
+                   Ssp_ClockOutPolarity_High,
+                   Ssp_ClockOutPhase_First
+                  );
+    segmentSelId = Ssp_initializeSel(Ssp1, 1u, 31u);
+    
+    Ssp_write(Ssp1, segmentSelId, 0b01010101u);
+    
+    replyCounter = 0u;
 
     OSSemCreate(&ECHOSem, "ECHOSem", 0, &os_err);
     if(os_err != OS_ERR_NONE)
@@ -221,7 +269,7 @@ App_TaskStart (void *p_arg)
 
 
   EMAC_ConfigStruct.Mode = EMAC_MODE_100M_FULL;
-  EMAC_ConfigStruct.pbEMAC_Addr = eth_mac;
+  EMAC_ConfigStruct.pbEMAC_Addr = (uint8*)&(eth_mac[0u]);
 
   (void)p_arg;                                                    /* Prevent Compiler Warning */
   CPU_Init();                                               /* Initialize the uC/CPU Services */
@@ -643,7 +691,6 @@ void commandProcess(char *data, uint16 dataLength)
             {
                 processCommand(commandInBuffer);
             }
-            //(*taskFunctionPointer1)(taskBuffer1);
             commandInBufferPos = 0u;
         }
     }
@@ -666,28 +713,75 @@ void processCommand(char *buffer)
         dataPointer = strtok_r(NULL, " ", &savePointer);
         if (dataPointer == NULL)
         {
-            printUnknownCommand();
+            printParameterMissing();
         }
         else if (compareExtendedCommand("-c",dataPointer))
         {
-        	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
-        	 messageReady = 1u;
+            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
+            messageReady = 1u;
+        }
+        else
+        {
+            replyCounter = 0u;
+            pingHost(dataPointer);
+            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
+            messageReady = 1u;
+            //printUnknownCommand();
+        }
+    }
+    else if (compareBaseCommand("seven", dataPointer))
+    {
+        dataPointer = strtok_r(NULL, " ", &savePointer);
+        if (dataPointer == NULL)
+        {
+            printParameterMissing();
+        }
+        else
+        {
+            if (xatoi(&dataPointer, &value) == 1u)
+            {
+                setSevenSegment((uint8)value);
+                printAcknowledgement();
+            }
+            else
+            {
+                printError("param wrong");
+            }
+        }
+    }
+    else if (compareBaseCommand("close", dataPointer))
+    {
+        dataPointer = strtok_r(NULL, " ", &savePointer);
+        if (dataPointer != NULL)
+        {
+            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"socket closing! \n");
+            messageReady = 1u;
+            SOCKET_close(1);
         }
         else
         {
             printUnknownCommand();
         }
     }
-    else if (compareBaseCommand("close", dataPointer))
-    {
-    	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"socket closing! \n");
-    	 messageReady = 1u;
-    	 SOCKET_close(1);
-    }
     else
     {
         printUnknownCommand();
     }
+}
+
+void pingHost(char *address)
+{
+    //TODO ping
+}
+
+void setSevenSegment(uint8 num)
+{
+    if (num > 15u)
+    {
+        return;
+    }
+    
+    Ssp_write(Ssp1, segmentSelId, segmentValue[num]);
 }
 
 void HardFault_Handler()
