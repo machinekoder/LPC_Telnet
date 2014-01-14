@@ -1020,7 +1020,7 @@ uint8 pingHost(uint8 count, char *address)
         
         if (dataPointer != NULL)
         {
-            if ((pos < 4u) || (xatoi(&dataPointer, &value) == 1u))
+            if ((pos < 4u) && (xatoi(&dataPointer, &value) == 1u))
             {
                 targetAddress.b[pos] = (uint8)value;
                 pos++;
