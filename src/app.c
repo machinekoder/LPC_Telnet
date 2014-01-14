@@ -129,7 +129,7 @@ static void pingHost(uint8 count, char* address);
 static void commandProcess(char *data, uint16 dataLength); 
 static void processCommand(char *data);
 static void setSevenSegment(uint8 num, uint8 point);
-void doArp(char *broadcastAddress, char *clearAddress);
+uint8 doArp(char* broadcastAddress, char* clearAddress);
 
 
 /*
@@ -890,8 +890,14 @@ void processCommand(char *buffer)
         }
         else
         {
-            doArp(broadcastAddress, clearAddress);
-            printAcknowledgement();
+            if (doArp(broadcastAddress, clearAddress) == 1u)
+            {
+                printAcknowledgement();
+            }
+            else
+            {
+                printError("wrong Input");
+            }
         }
     }
     else if (compareBaseCommand("logout", dataPointer))
@@ -914,7 +920,7 @@ void processCommand(char *buffer)
     }
 }
 
-void doArp(char *broadcastAddress, char *clearAddress)
+uint8 doArp(char *broadcastAddress, char *clearAddress)
 {
     int64 value;
     char *savePointer;
@@ -939,13 +945,20 @@ void doArp(char *broadcastAddress, char *clearAddress)
                 }
                 else
                 {
-                    return;
+                    return 0u;
                 }
             }
             dataPointer = strtok_r(NULL, ":", &savePointer);
         }
         
-        ARP_TableClearEntry(address);
+        if (pos == 6u)
+        {
+            ARP_TableClearEntry(address);
+        }
+        else
+        {
+            return 0u;
+        }
     }
     
     if (broadcastAddress != NULL)
@@ -964,14 +977,21 @@ void doArp(char *broadcastAddress, char *clearAddress)
                 }
                 else
                 {
-                    return;
+                    return 0u;
                 }
             }
             dataPointer = strtok_r(NULL, ":", &savePointer);
         }
-        
-        ARP_SendEchoRequest(ipAddress);
+        if (pos == 4u)
+        {
+            ARP_SendEchoRequest(ipAddress);
+        }
+        else
+        {
+            return 0u;
+        }
     }
+    return 1u;
 }
 
 void pingHost(uint8 count, char *address)
