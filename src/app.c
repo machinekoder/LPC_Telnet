@@ -50,23 +50,24 @@ static CPU_STK APP_NETTCBStk[APP_STACK_SIZE];
 const static uint8_t eth_mac[6] = {0x5a,0x01,0x02,0x03,0x04,0x05};
 
 const static uint16 segmentValue[16u] = {
-    0b00000001,
-    0b00000010,
-    0b00000100,
-    0b00001000,
-    0b00010000,
-    0b00100000,
-    0b01000000,
-    0b10000000,
-    0b00000001,
-    0b00000001,
-    0b00000001,
-    0b00000001,
-    0b00000001,
-    0b00000001,
-    0b00000001,
-    0b00000001
+    0b11011011u,
+    0b01010000u,
+    0b00011111u,
+    0b01011101u,
+    0b11010100u,
+    0b11001101u,
+    0b11001111u,
+    0b01011000u,
+    0b11011111u,
+    0b11011101u,
+    0b11011110u,
+    0b11000111u,
+    0b10001011u,
+    0b01010111u,
+    0b10001111u,
+    0b10001110u
 };
+
 
 OS_SEM RX_SEM;
 
@@ -924,12 +925,20 @@ void pingHost(uint8 count, char *address)
 
 void setSevenSegment(uint8 num, uint8 point)
 {
+    uint8 segmentCode;
+    
     if (num > 15u)
     {
         return;
     }
     
-    Ssp_write(Ssp1, segmentSelId, segmentValue[num]);
+    segmentCode = segmentValue[num];
+    if (point == 1u)
+    {
+        segmentCode |= 0b00100000;
+    }
+    
+    Ssp_write(Ssp1, segmentSelId, segmentCode);
 }
 
 void HardFault_Handler()
