@@ -71,8 +71,8 @@ uint16 commandInBufferPos;
 uint16 commandOutBufferPos;
 uint8 messageReady;
 
-const static char *user = "admin";
-const static char *pass = "pass";
+const static char user[] = "admin";
+const static char pass[] = "pwd";
 static ConnectionState connectionState;
 
 
@@ -612,7 +612,9 @@ void commandProcess(char *data, uint16 dataLength)
             
             if (connectionState == ConnectionState_User)
             {
-                if (strcmp(commandInBuffer, user) == (int)0)
+            	int key = 0;
+            	key = strcmp(commandInBuffer, user);
+                if (key == 13)
                 {
                     xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Enter pass:\n");
                     messageReady = 1u;
@@ -626,7 +628,9 @@ void commandProcess(char *data, uint16 dataLength)
             }
             else if (connectionState == ConnectionState_Pass)
             {
-                if (strcmp(commandInBuffer, pass) == (int)0)
+            	int key2 = 0;
+            	key2 = strcmp(commandInBuffer, pass);
+                if (key2 == (int)13)
                 {
                     xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"You are logged in:\n");
                     messageReady = 1u;
