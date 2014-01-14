@@ -775,6 +775,7 @@ void processCommand(char *buffer)
             }
             else if (compareBaseCommand("-d",dataPointer))
             {
+                dataPointer = strtok_r(NULL, " ", &savePointer);
                 if (dataPointer == NULL)
                 {
                     printParameterMissing();
@@ -795,6 +796,7 @@ void processCommand(char *buffer)
             }
             else if (compareBaseCommand("-p",dataPointer))
             {
+                dataPointer = strtok_r(NULL, " ", &savePointer);
                 if (dataPointer == NULL)
                 {
                     printParameterMissing();
@@ -849,6 +851,7 @@ void processCommand(char *buffer)
             }
             else if (compareBaseCommand("-a",dataPointer))
             {
+                dataPointer = strtok_r(NULL, " ", &savePointer);
                 if (dataPointer == NULL)
                 {
                     printParameterMissing();
@@ -861,6 +864,7 @@ void processCommand(char *buffer)
             }
             else if (compareBaseCommand("-d",dataPointer))
             {
+                dataPointer = strtok_r(NULL, " ", &savePointer);
                 if (dataPointer == NULL)
                 {
                     printParameterMissing();
@@ -891,7 +895,7 @@ void processCommand(char *buffer)
     else if (compareBaseCommand("logout", dataPointer))
     {
         dataPointer = strtok_r(NULL, " ", &savePointer);
-        if (dataPointer != NULL)
+        if (dataPointer == NULL)
         {
             xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"socket closing! \n");
             messageReady = 1u;
