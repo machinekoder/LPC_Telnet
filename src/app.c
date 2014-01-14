@@ -915,7 +915,64 @@ void processCommand(char *buffer)
 
 void doArp(char *broadcastAddress, char *clearAddress)
 {
+    int64 value;
+    char *savePointer;
+    char *dataPointer;
+    uint8 pos;
+    MAC_A address;
+    IP_A  ipAddress;
+    
+    
     //TODO arp
+    if (clearAddress != NULL)
+    {
+        pos = 0u;
+        dataPointer = strtok_r(clearAddress, ":", &savePointer);
+        while (dataPointer != NULL)
+        {
+            
+            if (dataPointer != NULL)
+            {
+                if ((pos == 6u) || (xatoi(&dataPointer, &value) == 1u))
+                {
+                    address.b[pos] = (uint8)value;
+                    pos++;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            dataPointer = strtok_r(NULL, ":", &savePointer);
+        }
+        
+        ARP_TableClearEntry(address);
+    }
+    
+    if (broadcastAddress != NULL)
+    {
+        pos = 0u;
+        dataPointer = strtok_r(clearAddress, ".", &savePointer);
+        while (dataPointer != NULL)
+        {
+            
+            if (dataPointer != NULL)
+            {
+                if ((pos == 4u) || (xatoi(&dataPointer, &value) == 1u))
+                {
+                    ipAddress.b[pos] = (uint8)value;
+                    pos++;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            dataPointer = strtok_r(NULL, ":", &savePointer);
+        }
+        
+        ARP_SendEchoRequest(ipAddress);
+    }
 }
 
 void pingHost(uint8 count, char *address)
@@ -938,7 +995,7 @@ void setSevenSegment(uint8 num, uint8 point)
         segmentCode |= 0b00100000;
     }
     
-    Ssp_write(Ssp1, segmentSelId, segmentCode);
+    Ssp_write(Ssp1, segmentSelId, ~segmentCode);    //negated
 }
 
 void HardFault_Handler()

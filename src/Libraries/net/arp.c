@@ -69,6 +69,26 @@ for (a=0; a<ARPENTRIES; a++)         // through all positions
 }
 }
 
+void ARP_TableClearEntry(MAC_A address)
+{
+    INT16U a;
+
+    for (a=0; a<ARPENTRIES; a++)         // through all positions
+    {
+        if ((ArpTable.MAC_Address[a].w[0] == address.w[0])
+            && (ArpTable.MAC_Address[a].w[1] == address.w[1])
+            && (ArpTable.MAC_Address[a].w[2] == address.w[2])
+        )
+        {
+        ArpTable.IP_Address[a].d     = 0;   // erase IP address field
+        ArpTable.MAC_Address[a].w[0] = 0;   // and MAC address fields
+        ArpTable.MAC_Address[a].w[1] = 0;
+        ArpTable.MAC_Address[a].w[2] = 0;
+        ArpTable.Time_Out[a] = 0;           // set time out interval to 0
+        }
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------
 // function:    int ARP_IsNewMACAddress (IP_A IPAddress, MAC_A *MACAddress)

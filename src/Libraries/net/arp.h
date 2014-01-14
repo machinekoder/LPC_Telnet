@@ -59,6 +59,8 @@ typedef struct arp_header {         // total 28 bytes
 
 void ARP_TableClear (void);
 
+void ARP_TableClearEntry(MAC_A address);
+
 // ---------------------------------------------------------------------------------------------
 // function:    void ARP_RemoveTimedOutEntries ()
 // parameters:  <none>
