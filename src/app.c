@@ -192,13 +192,13 @@ main (void)
     Pin_setFunction(0u, 9u, Pin_Function_SecondAlternate);
     Pin_setMode(0u, 9u, Pin_Mode_NoPullUpDown);
     Ssp_initialize(Ssp1, 
-                   1000u, 
+                   1E6, 
                    Ssp_DataSize_8Bit,
                    Ssp_FrameFormat_Spi,
                    Ssp_Mode_Master,
                    Ssp_Loopback_Disabled,
                    Ssp_SlaveOutput_Enabled,
-                   Ssp_ClockOutPolarity_High,
+                   Ssp_ClockOutPolarity_Low,
                    Ssp_ClockOutPhase_First
                   );
     segmentSelId = Ssp_initializeSel(Ssp1, 1u, 31u);
