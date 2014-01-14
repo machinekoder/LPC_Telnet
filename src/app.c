@@ -683,8 +683,8 @@ void processCommand(char *buffer)
 
 void HardFault_Handler()
 {
-    /*GPIO_SetValue(1,(1<<29));
+    /*GPIO_SetValue(1,(1<<29));*/
     //asm("ldr  r3, __cs3_reset");
-    asm volatile("ldr  r0, main\n"
-                 "bx   r0");*/
+    asm volatile("ldr  r0, =__cs3_reset\n"
+                 "bx   r0");
 }
