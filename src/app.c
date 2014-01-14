@@ -17,6 +17,7 @@
 #include <types.h>
 #include <xprintf.h>
 #include <ssp.h>
+#include <generic.h>
 
 /*
 ************************************************************************************************
@@ -922,8 +923,6 @@ void doArp(char *broadcastAddress, char *clearAddress)
     MAC_A address;
     IP_A  ipAddress;
     
-    
-    //TODO arp
     if (clearAddress != NULL)
     {
         pos = 0u;
@@ -933,9 +932,9 @@ void doArp(char *broadcastAddress, char *clearAddress)
             
             if (dataPointer != NULL)
             {
-                if ((pos == 6u) || (xatoi(&dataPointer, &value) == 1u))
+                if (pos < 6u)
                 {
-                    address.b[pos] = (uint8)value;
+                    address.b[pos] = (uint8)Generic_hex2int(dataPointer,2u);;
                     pos++;
                 }
                 else
@@ -958,7 +957,7 @@ void doArp(char *broadcastAddress, char *clearAddress)
             
             if (dataPointer != NULL)
             {
-                if ((pos == 4u) || (xatoi(&dataPointer, &value) == 1u))
+                if ((pos < 4u) || (xatoi(&dataPointer, &value) == 1u))
                 {
                     ipAddress.b[pos] = (uint8)value;
                     pos++;
@@ -977,6 +976,7 @@ void doArp(char *broadcastAddress, char *clearAddress)
 
 void pingHost(uint8 count, char *address)
 {
+    
     //TODO ping
 }
 
