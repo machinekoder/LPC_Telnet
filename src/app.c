@@ -71,8 +71,8 @@ uint16 commandInBufferPos;
 uint16 commandOutBufferPos;
 uint8 messageReady;
 
-const static char user[] = "admin";
-const static char pass[] = "pwd";
+const static char user[] = "admin\r";
+const static char pass[] = "pwd\r";
 static ConnectionState connectionState;
 
 
@@ -612,9 +612,7 @@ void commandProcess(char *data, uint16 dataLength)
             
             if (connectionState == ConnectionState_User)
             {
-            	int key = 0;
-            	key = strcmp(commandInBuffer, user);
-                if (key == 13)
+                if (strcmp(commandInBuffer, user) == 0)
                 {
                     xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Enter pass:\n");
                     messageReady = 1u;
@@ -628,9 +626,7 @@ void commandProcess(char *data, uint16 dataLength)
             }
             else if (connectionState == ConnectionState_Pass)
             {
-            	int key2 = 0;
-            	key2 = strcmp(commandInBuffer, pass);
-                if (key2 == (int)13)
+                if (strcmp(commandInBuffer, pass) == (int)0)
                 {
                     xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"You are logged in:\n");
                     messageReady = 1u;
@@ -664,15 +660,16 @@ void processCommand(char *buffer)
     }
     dataPointer = strtok_r(buffer, " ", &savePointer);
     
-    if (compareBaseCommand("test", dataPointer))
+    if (compareBaseCommand("ping", dataPointer))
     {
         dataPointer = strtok_r(NULL, " ", &savePointer);
         if (dataPointer == NULL)
         {
             printUnknownCommand();
         }
-        else if (compareExtendedCommand("hall",dataPointer))
+        else if (compareExtendedCommand("-c",dataPointer))
         {
+        	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
         }
         else
         {
