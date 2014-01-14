@@ -729,6 +729,7 @@ void processCommand(char *buffer)
             {
                 if (xatoi(&dataPointer, &value) == 1u)
                 {
+                    dataPointer = strtok_r(NULL, " ", &savePointer);
                     if (dataPointer == NULL)
                     {
                         printParameterMissing();
@@ -1014,10 +1015,10 @@ uint8 pingHost(uint8 count, char *address)
     char *dataPointer;
     char *savePointer;
     
+    pos = 0u;
     dataPointer = strtok_r(address, ".", &savePointer);
     while (dataPointer != NULL)
     {
-        
         if (dataPointer != NULL)
         {
             if ((pos < 4u) && (xatoi(&dataPointer, &value) == 1u))
@@ -1042,7 +1043,7 @@ uint8 pingHost(uint8 count, char *address)
         pICMPdest = (ICMP_HEADER  *)OSMemGet(&PacketMemArea, &ErrVar);// get memory block from Lan transmit partition
         if ( pICMPdest == NULL )
         {
-            return;
+            return 0u;
         }
         IP_ICMPPing((ICMP_HEADER  *)pICMPdest,// destination ICMP packet (ardy allocated)
                     &ICMPdestlen);
