@@ -991,6 +991,10 @@ uint8 doArp(char *broadcastAddress, char *clearAddress)
             return 0u;
         }
     }
+    
+    
+    ARP_TablePrint();
+    
     return 1u;
 }
 

@@ -147,7 +147,7 @@ SSRC += $(LIBRARYPATH)/ssp.c
 #SSRC += $(LIBRARYPATH)/rfm12.c
 #SSRC += $(LIBRARYPATH)/debug.c
 SSRC += $(XPRINTFPATH)/xprintf.c
-SSRC += $(XPRINTFPATH)/generic.c
+SSRC += $(LIBRARYPATH)/generic.c
 
 
 LDFILE = LPC1758.ld

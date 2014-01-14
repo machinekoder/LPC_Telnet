@@ -4,6 +4,7 @@
 // ---------------------------------------------------------------------------------------------
 
 #include "net_includes.h"
+#include <xprintf.h>
 
 // ---------------------------------------------------------------------------------------------
 // globals
@@ -14,6 +15,8 @@ ARPTAB ArpTable;
 extern IP_A my_ip;
 extern MAC_A my_mac;
 extern OS_MEM PacketMemArea;
+extern char* commandOutBuffer;
+extern uint8 messageReady;
 
 // ---------------------------------------------------------------------------------------------
 // functions
@@ -27,25 +30,27 @@ extern OS_MEM PacketMemArea;
 // ---------------------------------------------------------------------------------------------
 
 void ARP_TablePrint (void) {
-//INT16U a;
-//TODO:
+INT16U a;
+
 //uart_puts("                      ARP TABLE\n");
 //uart_puts("|--------------------------------------------------|\n");
 //uart_puts("|   Nr. |    IP-Address      |    MAC-Address      |\n");
 //uart_puts("|--------------------------------------------------|\n");
 
-/*for (a=0; a<ARPENTRIES; a++)         // through all 10 positions
-{
-	//TODO:
- printf("|   %d   |  %d %d %d %d   |  %x:%x:%x:%x:%x:%x  |\n",a,
+    for (a=0; a<ARPENTRIES; a++)         // through all 10 positions
+    {
+    xsnprintf(commandOutBuffer+(a*60u),EMAC_ETH_MAX_FLEN,
+         "|   %d   |  %u %u %u %u   |  %x:%x:%x:%x:%x:%x  |\n",a,
          ArpTable.IP_Address[a].b[0], ArpTable.IP_Address[a].b[1],
          ArpTable.IP_Address[a].b[2], ArpTable.IP_Address[a].b[3],
          ArpTable.MAC_Address[a].b[0], ArpTable.MAC_Address[a].b[1],
          ArpTable.MAC_Address[a].b[2], ArpTable.MAC_Address[a].b[3],
          ArpTable.MAC_Address[a].b[4], ArpTable.MAC_Address[a].b[5]);
+    }
+    
+    messageReady = 1u;
 }
-uart_puts("|--------------------------------------------------|\n");
-*/}
+
 
 
 // ---------------------------------------------------------------------------------------------
