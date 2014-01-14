@@ -123,10 +123,11 @@ static void APP_NET(void *p_arg);
 
 static void PostEchoEvent(void);
 
-static void pingHost(char *address);
+static void pingHost(uint8 count, char* address);
 static void commandProcess(char *data, uint16 dataLength); 
 static void processCommand(char *data);
-static void setSevenSegment(uint8 num);
+static void setSevenSegment(uint8 num, uint8 point);
+void doArp(char *broadcastAddress, char *clearAddress);
 
 
 /*
@@ -715,41 +716,179 @@ void processCommand(char *buffer)
         {
             printParameterMissing();
         }
-        else if (compareExtendedCommand("-c",dataPointer))
+        else if (compareBaseCommand("-c",dataPointer))
         {
+            dataPointer = strtok_r(NULL, " ", &savePointer);
+            if (dataPointer == NULL)
+            {
+                printParameterMissing();
+            }
+            else
+            {
+                if (xatoi(&dataPointer, &value) == 1u)
+                {
+                    if (dataPointer == NULL)
+                    {
+                        printParameterMissing();
+                    }
+                    else
+                    {
+                        replyCounter = 0u;
+                        pingHost((uint8)value, dataPointer);
+                        xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
+                        messageReady = 1u;
+                    }
+                }
+                else
+                {
+                    printError("param wrong");
+                }
+            }
             xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
             messageReady = 1u;
         }
         else
         {
             replyCounter = 0u;
-            pingHost(dataPointer);
+            pingHost(4u, dataPointer);
             xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Replies: \n", replyCounter);
             messageReady = 1u;
             //printUnknownCommand();
         }
     }
-    else if (compareBaseCommand("seven", dataPointer))
+    else if (compareBaseCommand("7seg", dataPointer))
     {
-        dataPointer = strtok_r(NULL, " ", &savePointer);
-        if (dataPointer == NULL)
+        uint8 params;
+        uint8 sevenValue;
+        uint8 point;
+        
+        params = 0u;
+        sevenValue = 0u;
+        point = 0u;
+        
+        while(1u)
+        {
+            dataPointer = strtok_r(NULL, " ", &savePointer);
+            if (dataPointer == NULL)
+            {
+                break;
+            }
+            else if (compareBaseCommand("-d",dataPointer))
+            {
+                if (dataPointer == NULL)
+                {
+                    printParameterMissing();
+                }
+                else
+                {
+                    if (xatoi(&dataPointer, &value) == 1u)
+                    {
+                        sevenValue = (uint8)value;
+                        params++;
+                    }
+                    else
+                    {
+                        printError("param wrong");
+                        return;
+                    }
+                }
+            }
+            else if (compareBaseCommand("-p",dataPointer))
+            {
+                if (dataPointer == NULL)
+                {
+                    printParameterMissing();
+                }
+                else
+                {
+                    if (xatoi(&dataPointer, &value) == 1u)
+                    {
+                        point = (uint8)value;
+                        params++;
+                    }
+                    else
+                    {
+                        printError("param wrong");
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                 printError("wrong param");
+                 return;
+            }
+        }
+        
+        if (params == 0u)
         {
             printParameterMissing();
         }
         else
         {
-            if (xatoi(&dataPointer, &value) == 1u)
+            setSevenSegment(sevenValue, point);
+            printAcknowledgement();
+        }
+    }
+    else if (compareBaseCommand("arp", dataPointer))
+    {
+        uint8 params;
+        char *broadcastAddress;
+        char *clearAddress;
+        
+        params = 0u;
+        broadcastAddress = NULL;
+        clearAddress = NULL;
+        
+        while(1u)
+        {
+            dataPointer = strtok_r(NULL, " ", &savePointer);
+            if (dataPointer == NULL)
             {
-                setSevenSegment((uint8)value);
-                printAcknowledgement();
+                break;
+            }
+            else if (compareBaseCommand("-a",dataPointer))
+            {
+                if (dataPointer == NULL)
+                {
+                    printParameterMissing();
+                }
+                else
+                {
+                    broadcastAddress = dataPointer;
+                    params++;
+                }
+            }
+            else if (compareBaseCommand("-d",dataPointer))
+            {
+                if (dataPointer == NULL)
+                {
+                    printParameterMissing();
+                }
+                else
+                {
+                    clearAddress = dataPointer;
+                    params++;
+                }
             }
             else
             {
-                printError("param wrong");
+                 printError("wrong param");
+                 return;
             }
         }
+        
+        if (params == 0u)
+        {
+            printParameterMissing();
+        }
+        else
+        {
+            doArp(broadcastAddress, clearAddress);
+            printAcknowledgement();
+        }
     }
-    else if (compareBaseCommand("close", dataPointer))
+    else if (compareBaseCommand("logout", dataPointer))
     {
         dataPointer = strtok_r(NULL, " ", &savePointer);
         if (dataPointer != NULL)
@@ -769,12 +908,17 @@ void processCommand(char *buffer)
     }
 }
 
-void pingHost(char *address)
+void doArp(char *broadcastAddress, char *clearAddress)
+{
+    //TODO arp
+}
+
+void pingHost(uint8 count, char *address)
 {
     //TODO ping
 }
 
-void setSevenSegment(uint8 num)
+void setSevenSegment(uint8 num, uint8 point)
 {
     if (num > 15u)
     {
