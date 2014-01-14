@@ -71,8 +71,8 @@ uint16 commandInBufferPos;
 uint16 commandOutBufferPos;
 uint8 messageReady;
 
-const static char *user = "admin";
-const static char *pass = "pass";
+const static char user[] = "admin";
+const static char pass[] = "pwd";
 static ConnectionState connectionState;
 
 
@@ -473,7 +473,7 @@ static void APP_NET(void *p_arg) {
           if (messageReady == 1u)
           {
                 SOCKET_write (socketno,
-                            (INT16U *)commandOutBuffer, strlen(commandOutBuffer));// sends the same data back to sender (TCP echo)
+                            (INT16U *)commandOutBuffer, strlen(commandOutBuffer));
 	                  messageReady = 0u;
           }
 	      OSMemPut(&PacketMemArea, (void *)Dataptr,&os_err);
@@ -608,11 +608,12 @@ void commandProcess(char *data, uint16 dataLength)
         }
         else
         {
+        	commandInBufferPos--;   // -1 to delate /r from command
             commandInBuffer[commandInBufferPos] = '\0';
             
             if (connectionState == ConnectionState_User)
             {
-                if (strcmp(commandInBuffer, user) == (int)0)
+                if (strcmp(commandInBuffer, user) == 0)
                 {
                     xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"Enter pass:\n");
                     messageReady = 1u;
@@ -660,20 +661,28 @@ void processCommand(char *buffer)
     }
     dataPointer = strtok_r(buffer, " ", &savePointer);
     
-    if (compareBaseCommand("test", dataPointer))
+    if (compareBaseCommand("ping", dataPointer))
     {
         dataPointer = strtok_r(NULL, " ", &savePointer);
         if (dataPointer == NULL)
         {
             printUnknownCommand();
         }
-        else if (compareExtendedCommand("hall",dataPointer))
+        else if (compareExtendedCommand("-c",dataPointer))
         {
+        	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"no Error cause no statistic\n");
+        	 messageReady = 1u;
         }
         else
         {
             printUnknownCommand();
         }
+    }
+    else if (compareBaseCommand("close", dataPointer))
+    {
+    	xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"socket closing! \n");
+    	 messageReady = 1u;
+    	 SOCKET_close(1);
     }
     else
     {
