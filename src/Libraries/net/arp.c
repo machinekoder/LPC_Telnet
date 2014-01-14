@@ -48,6 +48,16 @@ INT16U a;
          ArpTable.MAC_Address[a].b[4], ArpTable.MAC_Address[a].b[5]);
     }
     
+    for (a=0u; a < (ARPENTRIES*61u); a++)
+    {
+        if (commandOutBuffer[a] == '\0')
+        {
+            commandOutBuffer[a] = ' ';
+        }
+    }
+    
+    commandOutBuffer[ARPENTRIES*61u] = '\0';
+    
     messageReady = 1u;
 }
 

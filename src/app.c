@@ -892,7 +892,7 @@ void processCommand(char *buffer)
         
         if (doArp(broadcastAddress, clearAddress) == 1u)
         {
-            printAcknowledgement();
+            //printAcknowledgement();
         }
         else
         {
@@ -964,13 +964,13 @@ uint8 doArp(char *broadcastAddress, char *clearAddress)
     if (broadcastAddress != NULL)
     {
         pos = 0u;
-        dataPointer = strtok_r(clearAddress, ".", &savePointer);
+        dataPointer = strtok_r(broadcastAddress, ".", &savePointer);
         while (dataPointer != NULL)
         {
             
             if (dataPointer != NULL)
             {
-                if ((pos < 4u) || (xatoi(&dataPointer, &value) == 1u))
+                if ((pos < 4u) && (xatoi(&dataPointer, &value) == 1u))
                 {
                     ipAddress.b[pos] = (uint8)value;
                     pos++;
