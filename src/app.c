@@ -911,9 +911,10 @@ void processCommand(char *buffer)
         dataPointer = strtok_r(NULL, " ", &savePointer);
         if (dataPointer == NULL)
         {
-            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"socket closing! \n");
+            xsnprintf(commandOutBuffer,EMAC_ETH_MAX_FLEN,"you are logged out\n");
             messageReady = 1u;
-            SOCKET_close(1);
+            //SOCKET_close(1);
+            connectionState = ConnectionState_Offline;
         }
         else
         {
@@ -986,7 +987,7 @@ uint8 doArp(char *broadcastAddress, char *clearAddress)
                     return 0u;
                 }
             }
-            dataPointer = strtok_r(NULL, ":", &savePointer);
+            dataPointer = strtok_r(NULL, ".", &savePointer);
         }
         if (pos == 4u)
         {
@@ -1032,7 +1033,7 @@ uint8 pingHost(uint8 count, char *address)
                 return 0u;
             }
         }
-        dataPointer = strtok_r(NULL, ":", &savePointer);
+        dataPointer = strtok_r(NULL, ".", &savePointer);
     }
     if (pos != 4u)
     {
