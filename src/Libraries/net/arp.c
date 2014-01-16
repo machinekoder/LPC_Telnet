@@ -40,7 +40,7 @@ INT16U a;
     for (a=0; a<ARPENTRIES; a++)         // through all 10 positions
     {
     xsnprintf(commandOutBuffer+(a*44u),EMAC_ETH_MAX_FLEN,
-         "| %.3u | %.3u.%.3u.%.3u.%.3u | %.2x:%.2x:%.2x:%.2x:%.2x:%.2x |\n",a,
+         "| %03u | %03u.%03u.%03u.%03u | %02x:%02x:%02x:%02x:%02x:%02x |\n",a,
          ArpTable.IP_Address[a].b[0], ArpTable.IP_Address[a].b[1],
          ArpTable.IP_Address[a].b[2], ArpTable.IP_Address[a].b[3],
          ArpTable.MAC_Address[a].b[0], ArpTable.MAC_Address[a].b[1],
